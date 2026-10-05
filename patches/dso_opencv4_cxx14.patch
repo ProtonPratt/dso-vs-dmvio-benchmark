@@ -1,0 +1,119 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 0f137ec..d645001 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -4,6 +4,12 @@ PROJECT(${PROJECT_NAME})
+ CMAKE_MINIMUM_REQUIRED(VERSION 2.6)
+ #set(CMAKE_VERBOSE_MAKEFILE ON)
+ 
++# Add OpenGL and GLEW requirements
++find_package(OpenGL REQUIRED)
++find_package(GLEW REQUIRED)
++
++# Add X11 requirements
++find_package(X11 REQUIRED)
+ 
+ set(BUILD_TYPE Release)
+ #set(BUILD_TYPE RelWithDebInfo)
+@@ -22,11 +28,25 @@ find_package(LibZip QUIET)
+ find_package(Pangolin 0.2 QUIET)
+ find_package(OpenCV QUIET)
+ 
++# Add OpenGL definitions
++add_definitions(-DGL_GLEXT_PROTOTYPES)
++add_definitions(-DGLEW_STATIC)
++
++
+ # flags
+ add_definitions("-DENABLE_SSE")
+-set(CMAKE_CXX_FLAGS
+-   "${SSE_FLAGS} -O3 -g -std=c++0x -march=native"
++#set(CMAKE_CXX_FLAGS
++ #  "${SSE_FLAGS} -O3 -g -std=c++0x -march=native -DGL_GLEXT_PROTOTYPES"
+ #   "${SSE_FLAGS} -O3 -g -std=c++0x -fno-omit-frame-pointer"
++#)
++
++# Set C++14 as the minimum standard
++set(CMAKE_CXX_STANDARD 14)
++set(CMAKE_CXX_STANDARD_REQUIRED ON)
++set(CMAKE_CXX_EXTENSIONS OFF)
++
++set(CMAKE_CXX_FLAGS
++   "${SSE_FLAGS} -O3 -g -march=native"
+ )
+ 
+ if (MSVC)
+@@ -62,6 +82,9 @@ include_directories(
+   ${PROJECT_SOURCE_DIR}/thirdparty/Sophus
+   ${PROJECT_SOURCE_DIR}/thirdparty/sse2neon
+   ${EIGEN3_INCLUDE_DIR}
++  ${OPENGL_INCLUDE_DIRS}
++  ${GLEW_INCLUDE_DIRS}
++  ${X11_INCLUDE_DIR}
+ ) 
+ 
+ 
+@@ -125,7 +148,9 @@ endif()
+ if (OpenCV_FOUND AND Pangolin_FOUND)
+ 	message("--- compiling dso_dataset.")
+ 	add_executable(dso_dataset ${PROJECT_SOURCE_DIR}/src/main_dso_pangolin.cpp )
+-    target_link_libraries(dso_dataset dso boost_system cxsparse ${BOOST_THREAD_LIBRARY} ${LIBZIP_LIBRARY} ${Pangolin_LIBRARIES} ${OpenCV_LIBS})
++    target_link_libraries(dso_dataset dso boost_system cxsparse ${BOOST_THREAD_LIBRARY} ${LIBZIP_LIBRARY} ${Pangolin_LIBRARIES} ${OpenCV_LIBS} ${OPENGL_LIBRARIES}
++    ${GLEW_LIBRARIES}
++    ${X11_LIBRARIES})
+ else()
+ 	message("--- not building dso_dataset, since either don't have openCV or Pangolin.")
+ endif()
+diff --git a/src/IOWrapper/OpenCV/ImageRW_OpenCV.cpp b/src/IOWrapper/OpenCV/ImageRW_OpenCV.cpp
+index 170cb33..c33df27 100644
+--- a/src/IOWrapper/OpenCV/ImageRW_OpenCV.cpp
++++ b/src/IOWrapper/OpenCV/ImageRW_OpenCV.cpp
+@@ -34,7 +34,7 @@ namespace IOWrap
+ {
+ MinimalImageB* readImageBW_8U(std::string filename)
+ {
+-	cv::Mat m = cv::imread(filename, CV_LOAD_IMAGE_GRAYSCALE);
++	cv::Mat m = cv::imread(filename, cv::IMREAD_GRAYSCALE);
+ 	if(m.rows*m.cols==0)
+ 	{
+ 		printf("cv::imread could not read image %s! this may segfault. \n", filename.c_str());
+@@ -52,7 +52,7 @@ MinimalImageB* readImageBW_8U(std::string filename)
+ 
+ MinimalImageB3* readImageRGB_8U(std::string filename)
+ {
+-	cv::Mat m = cv::imread(filename, CV_LOAD_IMAGE_COLOR);
++	cv::Mat m = cv::imread(filename, cv::IMREAD_COLOR);
+ 	if(m.rows*m.cols==0)
+ 	{
+ 		printf("cv::imread could not read image %s! this may segfault. \n", filename.c_str());
+@@ -70,7 +70,7 @@ MinimalImageB3* readImageRGB_8U(std::string filename)
+ 
+ MinimalImage<unsigned short>* readImageBW_16U(std::string filename)
+ {
+-	cv::Mat m = cv::imread(filename, CV_LOAD_IMAGE_UNCHANGED);
++	cv::Mat m = cv::imread(filename, cv::IMREAD_UNCHANGED);
+ 	if(m.rows*m.cols==0)
+ 	{
+ 		printf("cv::imread could not read image %s! this may segfault. \n", filename.c_str());
+@@ -88,7 +88,7 @@ MinimalImage<unsigned short>* readImageBW_16U(std::string filename)
+ 
+ MinimalImageB* readStreamBW_8U(char* data, int numBytes)
+ {
+-	cv::Mat m = cv::imdecode(cv::Mat(numBytes,1,CV_8U, data), CV_LOAD_IMAGE_GRAYSCALE);
++	cv::Mat m = cv::imdecode(cv::Mat(numBytes, 1, CV_8U, data), cv::IMREAD_GRAYSCALE);  
+ 	if(m.rows*m.cols==0)
+ 	{
+ 		printf("cv::imdecode could not read stream (%d bytes)! this may segfault. \n", numBytes);
+diff --git a/src/util/IndexThreadReduce.h b/src/util/IndexThreadReduce.h
+index 683a8d7..6af5d68 100644
+--- a/src/util/IndexThreadReduce.h
++++ b/src/util/IndexThreadReduce.h
+@@ -28,7 +28,7 @@
+ #include "boost/thread.hpp"
+ #include <stdio.h>
+ #include <iostream>
+-
++#include <boost/bind.hpp>
+ 
+ 
+ namespace dso

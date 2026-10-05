@@ -1,0 +1,28 @@
+{
+  "t_cam_imu": [0.04727988224914392, -0.047443232143367084, -0.0681999605066297],
+  "t_cam_imu_source": "translation column of cam0/T_cam_imu in configs/camchain.yaml (TUM-VI Kalibr calibration)",
+  "max_association_dt_s": 0.02,
+
+  "tumvi": [
+    {"name": "calib-cam1",  "dir": "data/tumvi/calib-cam1",  "frames": 436,  "duration_s": 108.8, "camera_hz": 4,  "dso_mode": 1},
+    {"name": "calib-cam5",  "dir": "data/tumvi/calib-cam5",  "frames": 376,  "duration_s": 93.8,  "camera_hz": 4,  "dso_mode": 0},
+    {"name": "calib-cam8",  "dir": "data/tumvi/calib-cam8",  "frames": 202,  "duration_s": 50.3,  "camera_hz": 4,  "dso_mode": 0},
+    {"name": "calib-imu2",  "dir": "data/tumvi/calib-imu2",  "frames": 1061, "duration_s": 53.0,  "camera_hz": 20, "dso_mode": 0},
+    {"name": "magistrale5", "dir": "data/tumvi/magistrale5", "frames": 8922, "duration_s": 446.1, "camera_hz": 20, "dso_mode": 0}
+  ],
+
+  "metric_scale_check": {
+    "name": "calib-cam5 (run 2)",
+    "metric": "data/tumvi/calib-cam5/dmvio_run2_result_metric.txt",
+    "gt": "data/tumvi/calib-cam5/gt_imu.csv"
+  },
+
+  "tum_mono": [
+    {"name": "sequence_14", "dir": "data/tum_mono/sequence_14", "frames": 1550, "duration_s": 61.9},
+    {"name": "sequence_40", "dir": "data/tum_mono/sequence_40", "frames": 4350, "duration_s": 174.4}
+  ],
+
+  "euroc": [
+    {"name": "V2_02_medium", "dir": "data/euroc/V2_02_medium", "frames": 2348}
+  ]
+}

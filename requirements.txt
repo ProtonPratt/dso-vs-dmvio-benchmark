@@ -1,0 +1,3 @@
+numpy
+matplotlib
+opencv-python  # only for scripts/resize_images.py
